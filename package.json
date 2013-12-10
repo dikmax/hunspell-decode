@@ -1,0 +1,25 @@
+{
+  "name": "hunspell-decode",
+  "version": "2.0.0",
+  "description": "Convert russian hunspell dictionary",
+  "main": "decode.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dikmax/hunspell-decode.git"
+  },
+  "keywords": [
+    "hunspell"
+  ],
+  "author": "Maxim Dikun",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/dikmax/hunspell-decode/issues"
+  },
+  "homepage": "https://github.com/dikmax/hunspell-decode",
+  "dependencies": {
+      "q": "*"
+  }
+}
