@@ -1,6 +1,7 @@
 library Decoder;
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'package:utf/utf.dart';
@@ -16,12 +17,11 @@ class Decoder {
   File _outFile = new File("russian.dic");
   IOSink _out;
 
-  Future<Map<String, Affix>> _readAffixes() {
+  Future _readAffixes() {
     Completer<Map<String, Affix>> completer = new Completer();
 
     var stream = _affFile.openRead();
     var stringStream = stream.transform(new Utf8DecoderTransformer()).transform(new LineSplitter());
-    Map<String, Affix> affixes = {};
     var subscription;
     subscription = stringStream.listen((String line) {
       line = line.trim();
@@ -39,9 +39,9 @@ class Decoder {
         var type = command[0] == 'SFX' ? AffixType.SUFFIX : AffixType.PREFIX;
         var name = command[1];
 
-        Affix currentAffix = affixes[name];
+        Affix currentAffix = Affix.affixes[name];
         if (currentAffix == null) {
-          affixes[name] = new Affix(type, name, command[2]);
+          Affix.affixes[name] = new Affix(type, name, command[2]);
           return;
         }
         currentAffix.rules.add(new Rule(command[2], command[3], command[4]));
@@ -51,14 +51,14 @@ class Decoder {
         }
       }
     }, onDone: () {
-      completer.complete(affixes);
+      completer.complete(true);
     });
 
     return completer.future;
   }
 
 
-  Future _convertDictionary(Map<String, Affix> affixes) {
+  Future _convertDictionary(_) {
     Completer completer = new Completer();
 
     var stream = _dicFile.openRead();
@@ -76,6 +76,7 @@ class Decoder {
       }
 
       Word word = new Word.fromString(line);
+      word.convert();
       _writeWord(word.toString());
     }, onDone: () {
       completer.complete();
