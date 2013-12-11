@@ -1,0 +1,5 @@
+name: hunspell-decode
+author: Maxim Dikun <dikmax@gmail.com>
+dependencies:
+  utf:
+
