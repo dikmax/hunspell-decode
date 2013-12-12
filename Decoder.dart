@@ -15,6 +15,7 @@ class Decoder {
   File _affFile = new File("ru_RU.aff");
   File _dicFile = new File("ru_RU.dic");
   File _outFile = new File("russian.dic");
+  int _wordsCount = 0;
   IOSink _out;
 
   Future _readAffixes() {
@@ -63,29 +64,48 @@ class Decoder {
 
     var stream = _dicFile.openRead();
     var stringStream = stream.transform(new Utf8DecoderTransformer()).transform(new LineSplitter());
+    int totalCount = 0;
+    int currentLine = 0;
+    List<String> wordsList = [];
     stringStream.listen((line) {
       line = line.trim();
+      ++currentLine;
+      if (currentLine & 127 == 127) {
+        print("$currentLine or $totalCount processed...");
+      }
       if (line.indexOf('/') == -1) {
         try {
-          int.parse(line);
+          int i = int.parse(line);
+          totalCount = i;
         } catch (e) {
-          _writeWord(line);
+          wordsList.add(line);
         }
 
         return;
       }
 
       Word word = new Word.fromString(line);
-      word.convert();
-      _writeWord(word.toString());
+      wordsList.addAll(word.convert());
     }, onDone: () {
+      print("Sorting...");
+      wordsList.sort();
+      String prevWord = '';
+      print("Writing...");
+      wordsList.forEach((word) {
+        if (word == prevWord) {
+          return;
+        }
+        prevWord = word;
+        _writeWord(word);
+      });
       completer.complete();
     });
     return completer.future;
   }
 
   void _writeWord(String word) {
-    _out.write(word + "\n");
+    ++_wordsCount;
+    _out.writeln(word);
   }
 
   void process() {
@@ -94,6 +114,6 @@ class Decoder {
       .then(_convertDictionary)
       .then((_) => _out.flush)
       .then((_) => _out.close)
-      .then((_) => print("Done."));
+      .then((_) => print("${_wordsCount} words written. Done."));
   }
 }

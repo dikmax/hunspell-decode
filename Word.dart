@@ -45,7 +45,7 @@ class Word {
     });
   }
 
-  List<String> convert() {
+  HashSet<String> convert() {
     HashSet<String> result = new HashSet.from([word]);
 
     // TODO check артикулировав0
@@ -65,9 +65,7 @@ class Word {
       });
     });
 
-    print(result);
-
-    return result.toList();
+    return result;
   }
 
   HashSet<String> _applyPrefix(HashSet<String> words, Affix prefix, [String suffixFlag = null]) {
@@ -83,11 +81,11 @@ class Word {
         String replace = _parseWord(rule.affix);
         String newWord = word;
         RegExp condition = new RegExp('^' + rule.condition);
-        if (rule.condition == '.' || condition.hasMatch(newWord)) {
-          if (rule.remove != '.') {
+        if (rule.condition == '0' || condition.hasMatch(newWord)) {
+          if (rule.remove != '0') {
             newWord = newWord.replaceFirst(new RegExp('^' + rule.remove), '');
           }
-          if (replace != '.') {
+          if (replace != '0') {
             newWord = replace + newWord;
           }
         } else {
@@ -114,11 +112,11 @@ class Word {
         String replace = _parseWord(rule.affix);
         String newWord = word;
         RegExp condition = new RegExp(rule.condition + '\$');
-        if (rule.condition == '.' || condition.hasMatch(newWord)) {
-          if (rule.remove != '.') {
+        if (rule.condition == '0' || condition.hasMatch(newWord)) {
+          if (rule.remove != '0') {
             newWord = newWord.replaceFirst(new RegExp(rule.remove + '\$'), '');
           }
-          if (replace != '.') {
+          if (replace != '0') {
             newWord += replace;
           }
         } else {
