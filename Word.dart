@@ -2,9 +2,8 @@ part of Decoder;
 
 class Word {
   String word;
-  HashSet<String> affixes;
-  Map<String, Affix> prefixes = {};
-  Map<String, Affix> suffixes = {};
+  HashSet<String> affixesStrings;
+  Map<String, Affix> affixes = {};
 
   static String _parseWord(String line) {
     var slashPos = line.indexOf('/');
@@ -14,7 +13,7 @@ class Word {
     return line.substring(0, slashPos);
   }
 
-  static HashSet<String> _parseAffixes(String line) {
+  static HashSet<String> _parseAffixesToStrings(String line) {
     var slashPos = line.indexOf('/');
     var result = new HashSet.identity();
     if (slashPos == -1) {
@@ -30,26 +29,24 @@ class Word {
     return result;
   }
 
-  Word.fromString(String line) {
-    word = _parseWord(line);
-    affixes = _parseAffixes(line);
-
-    affixes.forEach((affix) {
+  Word(this.word, this.affixesStrings) {
+    affixesStrings.forEach((affix) {
       if (Affix.affixes[affix] != null) {
-        if (Affix.affixes[affix].type == AffixType.PREFIX) {
-          prefixes[affix] = Affix.affixes[affix];
-        } else {
-          suffixes[affix] = Affix.affixes[affix];
-        }
+        affixes[affix] = Affix.affixes[affix];
       }
     });
   }
 
+  Word.fromString(String line): this(_parseWord(line), _parseAffixesToStrings(line));
+
   HashSet<String> convert() {
     HashSet<String> result = new HashSet.from([word]);
 
-    // TODO check артикулировав0
-    suffixes.forEach((flag, suffix) {
+    affixes.forEach((flag, affix) {
+      HashSet<String> newWords = _applyAffix(new HashSet.from([word]), affix);
+      result = result.union(newWords);
+    });
+    /*suffixes.forEach((flag, suffix) {
       HashSet<String> newWords = _applySuffix(new HashSet.from([word]), suffix);
       result = result.union(newWords);
       prefixes.forEach((_, prefix) {
@@ -63,67 +60,45 @@ class Word {
       suffixes.forEach((_, suffix) {
         result = result.union(_applyPrefix(newWords, suffix, flag));
       });
-    });
+    });*/
 
     return result;
   }
 
-  HashSet<String> _applyPrefix(HashSet<String> words, Affix prefix, [String suffixFlag = null]) {
+  RegExp _getRegExp(Affix affix, condition) {
+    return new RegExp(affix.type == AffixType.PREFIX ? '^' + condition : condition + '\$');
+  }
+
+  HashSet<String> _applyAffix(HashSet<String> words, Affix affix) {
     HashSet<String> result = new HashSet.identity();
+
     words.forEach((word) {
-      prefix.rules.forEach((rule) {
-        HashSet<String> flags = _parseAffixes(rule.affix);
-        if (flags.length > 0) {
-          if (suffixFlag != null && !flags.contains(suffixFlag) || suffixFlag == null) {
-            return;
-          }
-        }
+      affix.rules.forEach((rule) {
         String replace = _parseWord(rule.affix);
         String newWord = word;
-        RegExp condition = new RegExp('^' + rule.condition);
+        RegExp condition = _getRegExp(affix, rule.condition);
         if (rule.condition == '0' || condition.hasMatch(newWord)) {
           if (rule.remove != '0') {
-            newWord = newWord.replaceFirst(new RegExp('^' + rule.remove), '');
+            newWord = newWord.replaceFirst(_getRegExp(affix, rule.remove), '');
           }
           if (replace != '0') {
-            newWord = replace + newWord;
+            if (affix.type == AffixType.PREFIX) {
+              newWord = replace + newWord;
+            } else {
+              newWord = newWord + replace;
+            }
           }
         } else {
           return;
         }
 
         result.add(newWord);
-      });
-    });
 
-    return result;
-  }
-
-  HashSet<String> _applySuffix(HashSet<String> words, Affix suffix, [String prefixFlag = null]) {
-    HashSet<String> result = new HashSet.identity();
-    words.forEach((word) {
-      suffix.rules.forEach((rule) {
-        HashSet<String> flags = _parseAffixes(rule.affix);
+        HashSet<String> flags = _parseAffixesToStrings(rule.affix);
         if (flags.length > 0) {
-          if (prefixFlag != null && !flags.contains(prefixFlag) || prefixFlag == null) {
-            return;
-          }
+          Word subWord = new Word(newWord, flags);
+          result = result.union(subWord.convert());
         }
-        String replace = _parseWord(rule.affix);
-        String newWord = word;
-        RegExp condition = new RegExp(rule.condition + '\$');
-        if (rule.condition == '0' || condition.hasMatch(newWord)) {
-          if (rule.remove != '0') {
-            newWord = newWord.replaceFirst(new RegExp(rule.remove + '\$'), '');
-          }
-          if (replace != '0') {
-            newWord += replace;
-          }
-        } else {
-          return;
-        }
-
-        result.add(newWord);
       });
     });
 
@@ -131,6 +106,6 @@ class Word {
   }
 
   String toString() {
-    return word + "[" + affixes.join(',') + "]";
+    return word + "[" + affixesStrings.join(',') + "]";
   }
 }
