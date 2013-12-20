@@ -29,6 +29,10 @@ class Word {
     return result;
   }
 
+  static RegExp _getRegExp(Affix affix, condition) {
+    return new RegExp(affix.type == AffixType.PREFIX ? '^' + condition : condition + '\$');
+  }
+
   Word(this.word, this.affixesStrings) {
     affixesStrings.forEach((affix) {
       if (Affix.affixes[affix] != null) {
@@ -48,10 +52,6 @@ class Word {
     });
 
     return result;
-  }
-
-  RegExp _getRegExp(Affix affix, condition) {
-    return new RegExp(affix.type == AffixType.PREFIX ? '^' + condition : condition + '\$');
   }
 
   HashSet<String> _getSupplementAffixes(Affix excludeAffix, [HashSet<String> additional = null]) {
