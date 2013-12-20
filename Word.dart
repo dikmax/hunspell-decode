@@ -46,27 +46,28 @@ class Word {
       HashSet<String> newWords = _applyAffix(new HashSet.from([word]), affix);
       result = result.union(newWords);
     });
-    /*suffixes.forEach((flag, suffix) {
-      HashSet<String> newWords = _applySuffix(new HashSet.from([word]), suffix);
-      result = result.union(newWords);
-      prefixes.forEach((_, prefix) {
-        result = result.union(_applyPrefix(newWords, prefix, flag));
-      });
-    });
-
-    prefixes.forEach((flag, prefix) {
-      HashSet<String> newWords = _applySuffix(new HashSet.from([word]), prefix);
-      result = result.union(newWords);
-      suffixes.forEach((_, suffix) {
-        result = result.union(_applyPrefix(newWords, suffix, flag));
-      });
-    });*/
 
     return result;
   }
 
   RegExp _getRegExp(Affix affix, condition) {
     return new RegExp(affix.type == AffixType.PREFIX ? '^' + condition : condition + '\$');
+  }
+
+  HashSet<String> _getSupplementAffixes(Affix excludeAffix, [HashSet<String> additional = null]) {
+    HashSet<String> result = new HashSet.identity();
+
+    affixes.forEach((flag, affix) {
+      if (affix.type != excludeAffix.type) {
+        result.add(flag);
+      }
+    });
+
+    if (additional != null) {
+      result = result.union(additional);
+    }
+
+    return result;
   }
 
   HashSet<String> _applyAffix(HashSet<String> words, Affix affix) {
@@ -94,7 +95,7 @@ class Word {
 
         result.add(newWord);
 
-        HashSet<String> flags = _parseAffixesToStrings(rule.affix);
+        HashSet<String> flags = _getSupplementAffixes(affix, _parseAffixesToStrings(rule.affix));
         if (flags.length > 0) {
           Word subWord = new Word(newWord, flags);
           result = result.union(subWord.convert());
