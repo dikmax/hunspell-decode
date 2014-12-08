@@ -46,10 +46,6 @@ class Decoder {
           return;
         }
         currentAffix.rules.add(new Rule(command[2], command[3], command[4]));
-        if (command[5]) {
-          completer.completeError('Error in line: ' + line);
-          subscription.cancel();
-        }
       }
     }, onDone: () {
       completer.complete(true);
